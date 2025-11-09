@@ -1,9 +1,17 @@
 "use client"
 
+import { usePrompts } from "@/hooks/usePrompts";
 import { WORKER_URL } from "config"
 import { motion } from "framer-motion"
+import { useParams } from "next/navigation";
 
 export default function ProjectPage() {
+  const params = useParams();
+  const projectid = params?.id ?? "";
+
+  const {prompts} = usePrompts(projectid);
+
+
   return (
     <div className="h-screen w-screen bg-neutral-400 text-white overflow-hidden">
       <div className="flex justify-between h-full">
@@ -17,7 +25,11 @@ export default function ProjectPage() {
         >
             <div className="flex-1 overflow-y-auto space-y-4 mb-4">
                 <div className="p-4 bg-gradient-to-br from-neutral-800/40 to-neutral-800/20 rounded-2xl border border-neutral-700/30 shadow-lg backdrop-blur-sm">
-                    <p className="text-neutral-300 text-sm">conversation</p>
+                    {prompts.filter(prompt => prompt.type === "USER").map((prompt) => (
+                      <div key={prompt.id} className="mb-2">
+                        <p className="text-white">{prompt.content}</p>
+                      </div>
+                    ))}
                 </div>
             </div>
 

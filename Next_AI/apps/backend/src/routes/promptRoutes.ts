@@ -1,13 +1,9 @@
 import { Router } from "express";
-import { createProject, deleteProject, getProject, getProjects, updateProject } from "../controller/projectController";
+import { getPromptByProjectId} from "../controller/promptsController";
 import { authMiddleware } from "../middlewares/authMiddlewares";
 
-const ProjectRouter = Router();
+const promptRouter = Router();
 
-ProjectRouter.post("/create-project", authMiddleware, createProject);
-ProjectRouter.get("/get-projects", authMiddleware, getProjects);
-ProjectRouter.get("/get-project/:id", authMiddleware, getProject);
-ProjectRouter.put("/update-project/:id", authMiddleware, updateProject);
-ProjectRouter.delete("/delete-project/:id", authMiddleware, deleteProject);
+promptRouter.get("/prompts/:projectId", authMiddleware, getPromptByProjectId);
 
-export default ProjectRouter;
+export default promptRouter;

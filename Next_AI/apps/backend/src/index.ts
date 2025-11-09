@@ -10,12 +10,15 @@ import passport from "passport";
 import "./config/passport";
 import session from "express-session";
 import cookieParser from "cookie-parser";
+import promptRouter from "./routes/promptRoutes";
 const app = express();
 
 app.use(cors({
   origin: "http://localhost:3000",
   credentials: true,
 }));
+
+const PORT = process.env.PORT || 9090;
 
 
 
@@ -46,6 +49,8 @@ app.use("/api/v1/projects", ProjectRouter)
 
 app.use("/api/v1/auth", AuthRouter)
 
-app.listen(9090, () => {
-    console.log("Server started on port 9090");
+app.use("/api/v1/prompts", promptRouter);
+
+app.listen(PORT, () => {
+    console.log(`Server started on port ${PORT}`);
 });
