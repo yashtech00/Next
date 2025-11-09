@@ -1,0 +1,14 @@
+{
+  "name": "common",
+  "private": true,
+  "type": "module",
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "exports":{
+    "./types": "./types.ts"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}
