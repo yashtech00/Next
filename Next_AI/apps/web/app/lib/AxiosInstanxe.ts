@@ -1,5 +1,6 @@
 import { AuthType } from "@/types/AuthType";
 import axios from "axios";
+import { WORKER_URL } from "config";
 
 export const axiosInstance = axios.create({
   baseURL: "http://localhost:9090/api/v1",
@@ -113,4 +114,36 @@ export const deleteProject = async (id: string) => {
     console.error("Error deleting prompt:", error);
     throw error;
   }
+  
 };
+
+export const generatePrompt = async(projectId:string,prompt:string)=>{
+    try{
+      const res = await axiosInstance.post(`${WORKER_URL}/prompt`,{projectId,prompt},{
+         withCredentials: true,
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`, // or sessionStorage
+      },
+      })
+      return res.data
+    }catch(error){
+        console.error("error generating prompt",error);
+        throw error;
+        
+    }
+  }
+
+  export const getPrompts = async (projectId: string) => {
+    try {
+      const response = await axiosInstance.get(`/prompts/${projectId}`, {
+        withCredentials: true,
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`, // or sessionStorage
+        },
+      });
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching prompts:", error);
+      throw error;
+    }
+  };
