@@ -1,7 +1,5 @@
 import dotenv from "dotenv";
-// Load env vars as early as possible so modules (Prisma, passport strategies, etc.) can read them
 dotenv.config();
-
 import express from "express";
 import ProjectRouter from "./routes/projectRoutes";
 import AuthRouter from "./routes/authRoutes";
@@ -13,21 +11,18 @@ import cookieParser from "cookie-parser";
 import promptRouter from "./routes/promptRoutes";
 const app = express();
 
-app.use(cors({
-  origin: "http://localhost:3000",
-  credentials: true,
-}));
+app.use(
+  cors({
+    origin: "http://localhost:3000",
+    credentials: true,
+  })
+);
 
 const PORT = process.env.PORT || 9090;
 
-
-
 app.use(express.json());
 
-app.get("/", (req, res) => {
-    
-});
-
+app.get("/", (req, res) => {});
 
 dotenv.config();
 
@@ -44,13 +39,12 @@ app.use(
 app.use(passport.initialize());
 app.use(passport.session());
 
+app.use("/api/v1/projects", ProjectRouter);
 
-app.use("/api/v1/projects", ProjectRouter)
-
-app.use("/api/v1/auth", AuthRouter)
+app.use("/api/v1/auth", AuthRouter);
 
 app.use("/api/v1/prompts", promptRouter);
 
 app.listen(PORT, () => {
-    console.log(`Server started on port ${PORT}`);
+  console.log(`Server started on port ${PORT}`);
 });

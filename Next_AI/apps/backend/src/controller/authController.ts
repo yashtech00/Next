@@ -6,7 +6,8 @@ import jwt from "jsonwebtoken";
 export const register = async (req: Request, res: Response) => {
   try {
     const { name, email, password } = req.body;
-
+    console.log(req.body,"yyyyy");
+    
     if (!email || !password) {
       return res.status(400).json({ error: "Email and password are required" });
     }

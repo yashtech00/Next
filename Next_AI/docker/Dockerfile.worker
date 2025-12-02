@@ -6,7 +6,7 @@ COPY ./apps/worker/ ./apps/worker
 COPY ./packages/ ./packages
 COPY package* .
 COPY turbo.json .
-COPY bun.lock .
+COPY bun.lockb .
 
 RUN bun install
 RUN bun run db:generate

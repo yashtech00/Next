@@ -6,11 +6,11 @@ COPY ./apps/ws/ ./apps/ws
 COPY ./packages/ ./packages
 COPY package* .
 COPY turbo.json .
-COPY bun.lock .
+COPY bun.lockb .
 
 RUN bun install
 RUN bun run db:generate
 
 EXPOSE 9093
 
-CMD ["bun", "run", "ws-relayer"]
+CMD ["bun", "run", "ws"]

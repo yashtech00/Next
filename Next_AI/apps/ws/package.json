@@ -1,5 +1,5 @@
 {
-  "name": "ws-relayer",
+  "name": "ws",
   "module": "index.ts",
   "type": "module",
   "devDependencies": {

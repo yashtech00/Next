@@ -1,7 +1,7 @@
 import express from "express";
 import { prisma } from "db/client";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+// import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { ArtifactProcessor } from "./parser";
 import { onFileUpdate, onShellCommand } from "./os";
 
@@ -10,8 +10,8 @@ const app = express();
 app.use(express.json());
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-const s3 = new S3Client({ region: process.env.AWS_REGION });
-const BUCKET_NAME = process.env.AWS_BUCKET_NAME!;
+// const s3 = new S3Client({ region: process.env.AWS_REGION });
+// const BUCKET_NAME = process.env.AWS_BUCKET_NAME!;
 const SystemPrompt = "You are a helpful AI coding assistant.";
 
 // STREAM + SAVE to S3
@@ -49,21 +49,30 @@ app.post("/prompt", async (req, res) => {
     });
 
     // Prepare messages for Gemini
-    const messages = [
-      { role: "system", content: SystemPrompt },
-      ...allPrompts.map((p, i) => ({
-        role: i % 2 === 0 ? "user" : "model",
-        content: p.content,
-      })),
-      { role: "user", content: prompt },
-    ];
+   const messages = [
+  {
+    role: "user",
+    content: `SYSTEM: ${SystemPrompt}`
+  },
+  ...allPrompts.map((p: any, i: any) => ({
+    role: i % 2 === 0 ? "user" : "model",
+    content: p.content,
+  })),
+  { role: "user", content: prompt },
+];
+
 
     // --- Your artifact logic preserved ---
   
-  let artifactProcess = new ArtifactProcessor("", (filePath, fileContent) => onFileUpdate(filePath, fileContent, projectId, promptDb.id, project.type), (shellCommand) => onShellCommand(shellCommand, projectId, promptDb.id));
-  let artifact = "";
+    let artifactProcess = new ArtifactProcessor("", (filePath, fileContent) =>
+      onFileUpdate(filePath, fileContent, projectId, prompt.id, projectId.type), (shellCommand) =>
+      onShellCommand(shellCommand, projectId, prompt.id));
+    let artifact = "";
 
-    const Client = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+    const Client = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    const result = await Client.generateContent("Say hello");
+    console.log(result.response.text());
+
 
     const stream = await Client.generateContentStream({
       contents: messages.map((m) => ({
@@ -108,19 +117,6 @@ app.post("/prompt", async (req, res) => {
       },
     });
 
-    // Final save to S3
-    if (artifact && artifact.length > 0) {
-      await s3.send(
-        new PutObjectCommand({
-          Bucket: BUCKET_NAME,
-          Key: `projects/${projectId}/${filePath}`,
-          Body: artifact,
-          ContentType: "text/plain",
-        })
-      );
-    }
-
-    // Save confirmation message
     await prisma.prompt.create({
       data: {
         project_id: projectId,
@@ -143,44 +139,3 @@ app.listen(4000, () => {
 
 
 
-
-    // // Stream setup
-    // res.setHeader("Content-Type", "text/event-stream");
-    // res.setHeader("Cache-Control", "no-cache, no-transform");
-    // res.setHeader("Connection", "keep-alive");
-    // res.flushHeaders?.();
-
-    // const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
-    // const contents = messages.map((m) => ({
-    //   role: m.role,
-    //   parts: [{ text: m.content }],
-    // }));
-
-    // const result = await model.generateContentStream({ contents });
-
-    // let codeBuffer = "";
-
-    // // Stream token-by-token
-    // for await (const chunk of result.stream) {
-    //   const token = chunk.text();
-    //   if (token) {
-    //     // 1️⃣ Send token to frontend
-    //     res.write(`data: ${token}\n\n`);
-
-    //     // 2️⃣ Append to local buffer
-    //     codeBuffer += token;
-
-    //     // 3️⃣ Periodically auto-save to S3
-    //     if (codeBuffer.length > 2000) {
-    //       await s3.send(
-    //         new PutObjectCommand({
-    //           Bucket: BUCKET_NAME,
-    //           Key: `projects/${projectId}/${filePath}`,
-    //           Body: codeBuffer,
-    //           ContentType: "text/plain",
-    //         })
-    //       );
-    //       codeBuffer = ""; // reset buffer
-    //     }
-    //   }
-    // }
