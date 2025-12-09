@@ -6,6 +6,13 @@
     "@types/bun": "latest",
     "common": "*"
   },
+   "scripts": {
+    "dev": "nodemon --watch src --exec bun run index.ts",
+    "start": "bun run index.ts",
+    "build": "tsc -p .",
+    "lint": "eslint . --ext .ts",
+    "lint:fix": "eslint . --ext .ts --fix"
+  },
   "peerDependencies": {
     "typescript": "^5.0.0"
   }

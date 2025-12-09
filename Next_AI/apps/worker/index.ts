@@ -3,7 +3,8 @@ import { prisma } from "db/client";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 // import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { ArtifactProcessor } from "./parser";
-import { onFileUpdate, onShellCommand } from "./os";
+import { onFileUpdate, onPromptEnd, onShellCommand } from "./os";
+import { RelayWebsocket } from "./ws";
 
 
 const app = express();
@@ -14,30 +15,24 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 // const BUCKET_NAME = process.env.AWS_BUCKET_NAME!;
 const SystemPrompt = "You are a helpful AI coding assistant.";
 
-// STREAM + SAVE to S3
 app.post("/prompt", async (req, res) => {
   try {
-    const { prompt, projectId, filePath = "index.js" } = req.body;
-
-    if (!prompt || !projectId) {
-      return res.status(400).json({ error: "Missing prompt or projectId" });
+    const { prompt, projectId } = req.body;
+    const project = await prisma.project.findUnique({
+      where: {
+        id: projectId
+      }
+    })
+    if (!projectId) {
+      return res.status(404).json({ error: "project not found" })
     }
 
-    // Collect chat history
-    const allPrompts = await prisma.prompt.findMany({
-      where: { project_id: projectId },
-      orderBy: { createdAt: "asc" },
-    });
-
-    // Save user prompt in DB
-    await prisma.prompt.create({
+    const promptDb = await prisma.prompt.create({
       data: {
-        project_id: projectId,
         content: prompt,
-      },
-    });
-
-    // Save conversation (USER message)
+        project_id: projectId
+      }
+    })
     await prisma.conversationHistory.create({
       data: {
         project_id: projectId,
@@ -46,67 +41,82 @@ app.post("/prompt", async (req, res) => {
         contents: prompt,
         hidden: false,
       },
-    });
+    })
+    const { diff } = await RelayWebsocket.getInstance().sendAndAwaitResponse(
+      {
+        event: "admin",
+        data: { type: "prompt-start" }
+      },
+      promptDb.id
+    );
+    if (diff) {
+      await prisma.prompt.create({
+        data: {
+          content: `<bolt-user-diff>${diff}</bolt-user-diff>\n\n`,
+          project_id: projectId,
+        },
+      });
 
-    // Prepare messages for Gemini
-   const messages = [
-  {
-    role: "user",
-    content: `SYSTEM: ${SystemPrompt}`
-  },
-  ...allPrompts.map((p: any, i: any) => ({
-    role: i % 2 === 0 ? "user" : "model",
-    content: p.content,
-  })),
-  { role: "user", content: prompt },
-];
-
-
-    // --- Your artifact logic preserved ---
-  
-    let artifactProcess = new ArtifactProcessor("", (filePath, fileContent) =>
-      onFileUpdate(filePath, fileContent, projectId, prompt.id, projectId.type), (shellCommand) =>
-      onShellCommand(shellCommand, projectId, prompt.id));
+      await prisma.conversationHistory.create({
+        data: {
+          project_id: projectId,
+          type: "TEXT_MESSAGE",
+          from: "USER",
+          contents: `<bolt-user-diff>${diff}</bolt-user-diff>`,
+          hidden: false,
+        }
+      })
+    }
+    const allprompts = await prisma.prompt.findMany({
+      where: { project_id: projectId },
+      orderBy: { createdAt: "asc" }
+    })
+    const artifactProcessor = new ArtifactProcessor(
+      "",
+      (filePath, fileContent) =>
+        onFileUpdate(filePath, fileContent, projectId, promptDb.id, project.type),
+      (shellCommand) =>
+        onShellCommand(shellCommand, projectId, promptDb.id)
+    );
     let artifact = "";
-
-    const Client = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-    const result = await Client.generateContent("Say hello");
-    console.log(result.response.text());
-
-
-    const stream = await Client.generateContentStream({
-      contents: messages.map((m) => ({
-        role: m.role,
-        parts: [{ text: m.content }],
+    const model = genAI.getGenerativeModel({
+      model:"gemini-2.0-pro"
+    })
+    const messages = [
+      {
+        role: "user",
+        parts: [{ text: SystemPrompt }],
+      },
+      ...allprompts.map((p: any) => ({
+        role: "user",
+        parts: [{ text: p.content }],
       })),
+      {
+        role: "user",
+        parts: [{ text: prompt }],
+      }
+    ];
+    const stream = await model.generateContentStream({
+      contents: messages,
     });
-
-    // SSE streaming setup
-    res.setHeader("Content-Type", "text/event-stream");
-    res.setHeader("Cache-Control", "no-cache");
-    res.setHeader("Connection", "keep-alive");
 
     for await (const chunk of stream.stream) {
       const text = chunk.text();
-      if (text) {
-        artifactProcess.append(text);
-        artifactProcess.parse();
-        artifact += text;
-        res.write(`data: ${text}\n\n`);
-      }
-    }
+      if (text) continue;
 
+      artifactProcessor.append(text);
+      artifactProcessor.parse();
+      artifact += text;
+    }
     console.log("done!");
 
-    // Save Gemini response
     await prisma.prompt.create({
       data: {
-        project_id: projectId,
         content: artifact,
-      },
+        project_id: projectId,
+      }
     });
 
-    // Save conversation (ASSISTANT message)
     await prisma.conversationHistory.create({
       data: {
         project_id: projectId,
@@ -114,28 +124,26 @@ app.post("/prompt", async (req, res) => {
         from: "ASSISTANT",
         contents: artifact,
         hidden: false,
-      },
-    });
-
-    await prisma.prompt.create({
+      }
+    })
+    
+    await prisma.action.create({
       data: {
-        project_id: projectId,
-        content: "[Code generated and saved to S3]",
-      },
+        content: 'Done!',
+        projectId,
+        promptId: promptDb.id
+      }
     });
+    onPromptEnd(promptDb.id)
+    res.json({ success: true });
 
-    res.write("data: [DONE]\n\n");
-    res.end();
-  } catch (error) {
-    console.error("Error in /prompt route:", error);
-    res.status(500).json({ error: "Failed to process prompt" });
+  } catch (e) {
+    console.error("gemini error", e);
+    res.json({ success: false });
   }
-});
+})
 
-app.listen(4000, () => {
-  console.log("Worker server running on port 4000");
-});
-
-
-
-
+app.listen(9092,()=>{
+  console.log("worker is listen on port 9092");
+  
+})

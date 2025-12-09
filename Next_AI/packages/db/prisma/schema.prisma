@@ -24,12 +24,20 @@ model Project {
   id                   String                @id @default(cuid())
   title                String
   user_id              String
+  type        ProjectType @default(NEXTJS)
   createdAt            DateTime              @default(now())
   updatedAt            DateTime              @updatedAt
   conversation_history ConversationHistory[]
   user                 User                  @relation(fields: [user_id], references: [id])
   prompts              Prompt[]
   actions              Action[]
+}
+
+  
+enum ProjectType {
+  REACT_NATIVE
+  NEXTJS
+  REACT
 }
 
 model Prompt {

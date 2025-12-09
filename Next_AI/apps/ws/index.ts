@@ -1,5 +1,5 @@
 import type { ServerWebSocket } from "bun";
-import type { MessagePayload } from "common/types";
+import type { MessagePayload } from "../../packages/common/type.js";
 
 //TODO: Add auth
 const SUBSCRIPTIONS: ServerWebSocket<unknown>[] = []
@@ -47,3 +47,4 @@ Bun.serve({
     },
     port: 9093
   });
+  console.log("🚀 WebSocket server running on ws://localhost:9093");
