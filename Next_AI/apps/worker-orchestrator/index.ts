@@ -63,13 +63,13 @@ app.use("/:projectId", async (req, res, next) => {
 
   idleMachine.isUsed = true;
 
-  const copmmand = new SetDesiredCapacityCommand({
+  const command = new SetDesiredCapacityCommand({
     AutoScalingGroupName: "vscode-base-image",
     DesiredCapacity:
       All_Machines.length + (5 - All_Machines.filter((x) => x.isUsed).length), // Keep 5 idle machines
     HonorCooldown: false,
   });
-  await client.send(copmmand);
+  await client.send(command);
 
   res.send({
     ip: idleMachine.ip,

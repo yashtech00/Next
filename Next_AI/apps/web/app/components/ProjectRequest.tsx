@@ -1,3 +1,5 @@
+"use client"
+
 import { generatePrompt } from "@/lib/AxiosInstanxe"
 import { Project } from "@/project/[id]/project";
 import { useSearchParams } from "next/navigation"

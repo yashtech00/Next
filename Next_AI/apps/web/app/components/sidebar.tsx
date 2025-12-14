@@ -184,24 +184,6 @@ export default function Sidebar() {
                 </ul>
               )}
             </div>
-
-            {/* Footer actions */}
-            <div className="mt-2 pt-2 border-t border-gray-800 flex items-center gap-2">
-              <button
-                onClick={() => router.push('/projects/new')}
-                className="flex-1 py-2 rounded-md bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-500"
-              >
-                + New Project
-              </button>
-
-              <button
-                onClick={() => router.push('/projects')}
-                title="View all projects"
-                className="p-2 rounded-md hover:bg-white/6"
-              >
-                <Loader className="w-5 h-5 text-gray-300" />
-              </button>
-            </div>
           </motion.aside>
         )}
       </AnimatePresence>
