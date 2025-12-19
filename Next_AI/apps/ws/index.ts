@@ -8,7 +8,10 @@ const API_SUBSCRIPTIONS: ServerWebSocket<unknown>[] = []
 
 let bufferedMessages: any[] = []
 
-Bun.serve({
+const PORT = process.env.PORT || process.env.WS_PORT || 9095;
+
+try {
+  Bun.serve({
     fetch(req, server) {
       // upgrade the request to a WebSocket
       if (server.upgrade(req)) {
@@ -38,13 +41,35 @@ Bun.serve({
             }
         },
         open(ws) {
-            console.log("open");
+            console.log("WebSocket connection opened");
         },
         close(ws) {
-            console.log("close");
+            console.log("WebSocket connection closed");
+            // Remove from subscriptions
+            const subIndex = SUBSCRIPTIONS.indexOf(ws);
+            if (subIndex > -1) {
+                SUBSCRIPTIONS.splice(subIndex, 1);
+            }
+            const apiIndex = API_SUBSCRIPTIONS.indexOf(ws);
+            if (apiIndex > -1) {
+                API_SUBSCRIPTIONS.splice(apiIndex, 1);
+            }
         },
         
     },
-    port: 9093
+    port: Number(PORT)
   });
-  console.log("🚀 WebSocket server running on ws://localhost:9093");
+  console.log(`🚀 WebSocket server running on ws://localhost:${PORT}`);
+} catch (error: any) {
+  if (error.code === "EADDRINUSE") {
+    console.error(`❌ Port ${PORT} is already in use.`);
+    console.error(`Please either:`);
+    console.error(`1. Stop the process using port ${PORT}`);
+    console.error(`2. Use a different port by setting PORT or WS_PORT environment variable`);
+    console.error(`   Example: PORT=9094 bun run index.ts`);
+    process.exit(1);
+  } else {
+    console.error("Failed to start WebSocket server:", error);
+    throw error;
+  }
+}

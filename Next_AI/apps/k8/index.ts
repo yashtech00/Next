@@ -14,6 +14,7 @@ const containerCreateBucket = new promClient.Histogram({
 });
 
 const app = express();
+app.use(express.json());
 
 const kc = new KubeConfig();
 kc.loadFromDefault();
@@ -192,7 +193,7 @@ console.log("pod is ready, moving project to pod");
   
 }
 
-app.get("worker/:projectId", async (req, res) => {
+app.get("/projects/:projectId", async (req, res) => {
   console.log("Received request to assign project to pod for project ", req.params.projectId);
   const { projectId } = req.params;
   const project = await prisma.project.findUnique({
@@ -207,7 +208,7 @@ app.get("worker/:projectId", async (req, res) => {
 
   console.log("project found, assigning to pod");
   const startTime = Date.now();
-  await assignPodToProject(projectId, "REACT");
+  await assignPodToProject(projectId, project.type as "NEXTJS" | "REACT");
   console.log("pod assigned, sending response");
   containerCreateBucket.observe({ type: project.type }, Date.now() - startTime);
   res.json({ 
@@ -215,8 +216,31 @@ app.get("worker/:projectId", async (req, res) => {
     previewUrl: `https://preview-${projectId}.${DOMAIN}`, 
     workerUrl: `https://worker-${projectId}.${DOMAIN}` 
 });
-  
-  
+})
+
+app.get("/worker/:projectId", async (req, res) => {
+  console.log("Received request to assign project to pod for project ", req.params.projectId);
+  const { projectId } = req.params;
+  const project = await prisma.project.findUnique({
+    where: {
+      id: projectId,
+    }
+  });
+  if (!project) {
+    res.status(404).json({ error: "project not found" });
+    return;
+  }
+
+  console.log("project found, assigning to pod");
+  const startTime = Date.now();
+  await assignPodToProject(projectId, project.type as "NEXTJS" | "REACT");
+  console.log("pod assigned, sending response");
+  containerCreateBucket.observe({ type: project.type }, Date.now() - startTime);
+  res.json({ 
+    sessionUrl: `https://session-${projectId}.${DOMAIN}`, 
+    previewUrl: `https://preview-${projectId}.${DOMAIN}`, 
+    workerUrl: `https://worker-${projectId}.${DOMAIN}` 
+  });
 })
 
 app.get("/metrics", async (req, res) => {
@@ -224,6 +248,7 @@ app.get("/metrics", async (req, res) => {
   res.end(await promClient.register.metrics());
 })
 
-app.listen(3000,()=>{
-  console.log("Server is running on port 7001");
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, ()=>{
+  console.log(`Server is running on port ${PORT}`);
 })

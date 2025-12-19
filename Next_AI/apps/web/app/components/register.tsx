@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Mail, User, Lock, Github, Chrome, LogOut } from "lucide-react";
 import { Register, Login } from "@/lib/AxiosInstanxe";
 import { AuthType } from "@/types/AuthType";
+import { BACKEND_URL } from "config";
 
 export default function UniqueForm({ mode }: { mode: "register" | "login" }) {
   const [email, setEmail] = useState("");
@@ -36,11 +37,11 @@ export default function UniqueForm({ mode }: { mode: "register" | "login" }) {
   };
 
   const handleGoogleLogin = () => {
-    window.location.href = "http://localhost:8080/api/v1/auth/google";
+    window.location.href = `${BACKEND_URL}/api/v1/auth/google`;
   };
 
   const handleGithubLogin = () => {
-    window.location.href = "http://localhost:8080/api/v1/auth/github";
+    window.location.href = `${BACKEND_URL}/api/v1/auth/github`;
   };
 
   const handleLogout = () => {

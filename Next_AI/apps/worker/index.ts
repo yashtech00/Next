@@ -143,7 +143,7 @@ app.post("/prompt", async (req, res) => {
   }
 })
 
-app.listen(9092,()=>{
-  console.log("worker is listen on port 9092");
+app.listen(9094,()=>{
+  console.log("worker is listen on port 9094");
   
 })

@@ -17,10 +17,10 @@
     "typescript": "^5"
   },
   "dependencies": {
-    "@aws-sdk/client-auto-scaling": "^3.922.0",
-    "@aws-sdk/client-ec2": "^3.922.0",
     "@types/express": "^5.0.5",
+    "@types/node": "^20.0.0",
     "cors": "^2.8.5",
+    "dockerode": "^4.0.9",
     "express": "^5.1.0"
   }
 }

@@ -30,6 +30,8 @@
     "packages/*"
   ],
   "dependencies": {
+    "@types/dockerode": "^3.3.47",
+    "dockerode": "^4.0.9",
     "nodemailer": "^7.0.9"
   }
 }

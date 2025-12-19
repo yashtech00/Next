@@ -6,8 +6,19 @@ import {prisma} from "db/client"
 export const createProject = async (req:any, res:any) => {
     try {
         const { prompt } = req.body;
-        const title = prompt.split("\n")[0];
+        
+        if (!prompt) {
+            return res.status(400).json({ error: "Prompt is required" });
+        }
+        
         const userId = req.userId;
+        
+        if (!userId) {
+            return res.status(401).json({ error: "Unauthorized: User ID is missing. Please ensure you are authenticated." });
+        }
+        
+        const title = prompt.split("\n")[0];
+        
         const project = await prisma.project.create({
             data: {
                 user_id: userId,
@@ -29,7 +40,7 @@ export const createProject = async (req:any, res:any) => {
         });
         res.status(201).json({projectId:project.id});
     } catch (error) {
-        console.error(error);
+        console.error("Error creating project:", error);
         res.status(500).json({ error: "Failed to create project" });
     }
 };
@@ -37,6 +48,11 @@ export const createProject = async (req:any, res:any) => {
 export const getProjects = async (req: any, res: any) => {
     try {
         const userId = req.userId;
+        
+        if (!userId) {
+            return res.status(401).json({ error: "Unauthorized: User ID is missing. Please ensure you are authenticated." });
+        }
+        
         const projects = await prisma.project.findMany({
             where: {
                 user_id: userId,
@@ -65,14 +81,13 @@ export const getProject = async (req: Request, res: Response) => {
 
 export const updateProject = async (req: Request, res: Response) => {
     try {
-        const { title, initial_prompt } = req.body;
+        const { title } = req.body;
         const project = await prisma.project.update({
             where: {
                 id: req.params.id,
             },
             data: {
                 title,
-                initial_prompt,
             },
         });
         res.status(200).json(project);

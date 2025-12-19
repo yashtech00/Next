@@ -41,7 +41,15 @@ services:
     depends_on:
       - postgres
     environment:
-      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/postgres
+      - DATABASE_URL=postgresql://postgres:postgres@localhost:5432/nextdb
+      - GOOGLE_CLIENT_ID=367282788470-fsbb4f3ps8fbnma6ugndrmfrl1gblqsr.apps.googleusercontent.com
+      - GOOGLE_CLIENT_SECRET=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
+      - GOOGLE_CALLBACK_URL=http://localhost:9090/api/v1/auth/google/callback
+      - JWT_SECRET=secret
+      - FRONTEND_URL=http://localhost:3000
+      - GITHUB_CLIENT_ID=Iv23lixMN0zX8MYILghd
+      - GITHUB_CLIENT_SECRET=0ef21d8d7c5eb7179ddeb4df7ee97aeaab6e9f85
+      - GITHUB_CALLBACK_URL=http://localhost:8080/api/v1/auth/github/callback
 
   postgres:
     image: postgres
