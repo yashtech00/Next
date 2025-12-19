@@ -18,17 +18,21 @@ services:
       - "9091:9091"
     depends_on:
       - postgres
+    env_file:
+      - .env
     environment:
-      - Gemini_API_KEY="AIzaSyAHrcp4Hx1X6XzrL1wKHU2YWPn7agHEvjQ"
-      - WS_RELAYER_URL=ws://ws-relayer:9093
-      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/postgres
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - WS_RELAYER_URL=${WS_RELAYER_URL}
+      - DATABASE_URL=${DATABASE_URL_WORKER}
   
   ws-relayer:
     build:
       context: .
       dockerfile: docker/Dockerfile.ws-relayer
+    env_file:
+      - .env
     environment:
-      - WS_RELAYER_URL=ws://ws-relayer:9093
+      - WS_RELAYER_URL=${WS_RELAYER_URL}
     depends_on:
       - postgres
   
@@ -40,21 +44,27 @@ services:
       - "9090:9090"
     depends_on:
       - postgres
+    env_file:
+      - .env
     environment:
-      - DATABASE_URL=postgresql://postgres:postgres@localhost:5432/nextdb
-      - GOOGLE_CLIENT_ID=367282788470-fsbb4f3ps8fbnma6ugndrmfrl1gblqsr.apps.googleusercontent.com
-      - GOOGLE_CLIENT_SECRET=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
-      - GOOGLE_CALLBACK_URL=http://localhost:9090/api/v1/auth/google/callback
-      - JWT_SECRET=secret
-      - FRONTEND_URL=http://localhost:3000
-      - GITHUB_CLIENT_ID=Iv23lixMN0zX8MYILghd
-      - GITHUB_CLIENT_SECRET=0ef21d8d7c5eb7179ddeb4df7ee97aeaab6e9f85
-      - GITHUB_CALLBACK_URL=http://localhost:8080/api/v1/auth/github/callback
+      - DATABASE_URL=${DATABASE_URL_BACKEND}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - GOOGLE_CALLBACK_URL=${GOOGLE_CALLBACK_URL}
+      - JWT_SECRET=${JWT_SECRET}
+      - FRONTEND_URL=${FRONTEND_URL}
+      - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID}
+      - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET}
+      - GITHUB_CALLBACK_URL=${GITHUB_CALLBACK_URL}
 
   postgres:
     image: postgres
+    env_file:
+      - .env
     environment:
-      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_DB=${POSTGRES_DB}
     ports:
       - "5432:5432"
     volumes:
@@ -66,9 +76,11 @@ services:
       dockerfile: docker/Dockerfile.frontend
     ports:
       - "3000:3000"
+    env_file:
+      - .env
     environment:
-      - NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
-      - CLERK_SECRET_KEY=
+      - NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
+      - CLERK_SECRET_KEY=${CLERK_SECRET_KEY}
     volumes:
       - ./apps/frontend:/app/apps/frontend
 
