@@ -1,12 +1,8 @@
 "use client"
 
-import UniqueForm from "@/components/register";
+import AuthForm from "@/components/AuthForm";
 
 export default function Register() {
-    return (
-        <div>
-              <UniqueForm/>
-        </div>
-    );
+    return <AuthForm mode="register" />;
 }
 

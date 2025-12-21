@@ -150,7 +150,8 @@ async function checkPodIsReady(name: string) {
 }
 
 async function assignPodToProject(projectId: string, projectType: "NEXTJS" | "REACT") { 
-  const pods = await listPods();
+  try {
+    const pods = await listPods();
   const podExists = pods.find(pod => pod === projectId);
   if (!podExists) { 
     console.log("pod does not exist,creating pod");
@@ -190,6 +191,11 @@ console.log("pod is ready, moving project to pod");
   console.log(stdout);
   console.log(stderr);
   console.log(`Assigned project ${projectId} to pod ${projectId}`);
+   }catch (error ) {
+    console.log(error, "yash error");
+    return;
+  }
+  
   
 }
 
@@ -248,7 +254,7 @@ app.get("/metrics", async (req, res) => {
   res.end(await promClient.register.metrics());
 })
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 app.listen(PORT, ()=>{
   console.log(`Server is running on port ${PORT}`);
 })

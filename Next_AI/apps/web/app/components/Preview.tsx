@@ -11,7 +11,7 @@ export function PreviewIframe({ url }: { url: string }) {
             console.log(`Checking if ${url} is ready`);
             fetch(url)
                 .then(response => response.ok)
-                .then(ok => {
+                .then(ok => {      
                     if (ok) {
                         setIsLoading(false);
                     } else {

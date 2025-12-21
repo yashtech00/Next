@@ -2,9 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-import Link from "next/link";
 import { Dialog, DialogTrigger, DialogContent, DialogTitle } from "./ui/dialog";
-import Register from "./register";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import UniqueForm from "./register";
@@ -21,10 +19,10 @@ export default function Navigation({ isLoggedIn }: { isLoggedIn: boolean }) {
     }
   }, []);
 
-  const handleLogout = async () => {
+  const handleLogout = () => {
     try {
       localStorage.removeItem("token");
-      router.push("/"); // Redirect to home or login page
+      setToken(null); // Update state to immediately show login/signup buttons
     } catch (error) {
       console.error("Logout failed:", error);
     }

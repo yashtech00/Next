@@ -1,11 +1,7 @@
 "use client"
 
-import LoginComp from "../../../components/login";
+import AuthForm from "@/components/AuthForm";
 
 export default function Login() {
-  return (
-    <div>
-        <LoginComp />
-    </div>
-  );
+  return <AuthForm mode="login" />;
 }
